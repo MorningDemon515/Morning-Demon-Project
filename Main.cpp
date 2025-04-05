@@ -18,7 +18,7 @@ int main()
 {
     InitWindow();
 
-    InitGraphics(3);
+    InitGraphics(1);
 
     MSG msg;
     ZeroMemory(&msg, sizeof(MSG));
