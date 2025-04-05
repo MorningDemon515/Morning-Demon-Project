@@ -1,7 +1,5 @@
 #include "Main.h"
 
-#include "Shader.h"
-
 extern HWND hwnd;
 extern bool run;
 
@@ -12,17 +10,9 @@ IDXGISwapChain* SwapChain;
 ID3D11RenderTargetView* RenderTargetView;
 ID3D11DepthStencilView* DepthStencilView;
 
-ID3D11Buffer* VertexBuffer;
-
-struct Vertex {
-	float x, y, z;
-	float r, g, b, a;
-};
-
-D3D11_INPUT_ELEMENT_DESC ied[] = {
-	{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
-};
+void InitScene();
+void Draw_Scene();
+void CleanScene();
 
 void InitGraphics(int windowed)
 {
@@ -125,20 +115,7 @@ void InitGraphics(int windowed)
 	vp.MaxDepth = 1.0f;
 	Context->RSSetViewports(1, &vp);
 
-	Vertex vertices[] = {
-	{ 0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-	{ 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-	{-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f }
-	};
-
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(D3D11_BUFFER_DESC));
-	bd.ByteWidth = sizeof(vertices);
-	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	D3D11_SUBRESOURCE_DATA srd = { vertices, 0, 0 };
-	Device->CreateBuffer(&bd, &srd, &VertexBuffer);
+	InitScene();
 
 }
 
@@ -150,26 +127,12 @@ void DrawScene()
 		run = false;
 	}
 
-	VertexShader vshader(Device, L"hlsl/VertexShader.txt", "Main");
-	PixelShader pshader(Device, L"hlsl/PixelShader.txt", "Main");
-
 	float color[4] = {0.0f,0.0f,0.0f,1.0f};
 	Context->OMSetRenderTargets(1, &RenderTargetView, NULL);
 	Context->ClearRenderTargetView(RenderTargetView,color);
 	Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0);
 
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	Context->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
-
-	vshader.SetInputLayout(Device, Context, ied, 2);
-
-	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	vshader.Set(Context);
-	pshader.Set(Context);
-
-	Context->Draw(3, 0);
+	Draw_Scene();
 
 	SwapChain->Present(0,0);
 }
@@ -184,6 +147,5 @@ void CleanGraphics()
 	RenderTargetView->Release();
     DepthStencilView->Release();
 
-	VertexBuffer->Release();
-
+	CleanScene();
 }
