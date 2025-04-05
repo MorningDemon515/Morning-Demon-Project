@@ -1,5 +1,7 @@
 #include "Main.h"
 
+#include "Shader.h"
+
 extern HWND hwnd;
 extern bool run;
 
@@ -8,14 +10,9 @@ ID3D11DeviceContext* Context;
 IDXGISwapChain* SwapChain;
 
 ID3D11RenderTargetView* RenderTargetView;
-//ID3D11DepthStencilView* DepthStencilView;
+ID3D11DepthStencilView* DepthStencilView;
 
 ID3D11Buffer* VertexBuffer;
-
-ID3D11VertexShader* VertexShader;
-ID3D11PixelShader* PixelShader;
-
-ID3D11InputLayout* InputLayout;
 
 struct Vertex {
 	float x, y, z;
@@ -115,14 +112,12 @@ void InitGraphics(int windowed)
 	Device->CreateRenderTargetView(BackBuffer,NULL, &RenderTargetView);
 	BackBuffer->Release();
 
-	/*
 	ID3D11Texture2D* DepthStencilBuffer;
 	Device->CreateTexture2D(&depthStencilDesc,NULL,&DepthStencilBuffer);
 	Device->CreateDepthStencilView(DepthStencilBuffer, NULL, &DepthStencilView);
 	DepthStencilBuffer->Release();
 
 	Context->OMSetRenderTargets(1,&RenderTargetView, DepthStencilView);
-	*/
 
 	D3D11_VIEWPORT vp = { 0 };
 	vp.Width = (windowed == 1) ? WINDOW_WIDTH : (FLOAT)ScreenWidth;
@@ -145,16 +140,6 @@ void InitGraphics(int windowed)
 	D3D11_SUBRESOURCE_DATA srd = { vertices, 0, 0 };
 	Device->CreateBuffer(&bd, &srd, &VertexBuffer);
 
-	ID3DBlob* pVSBlob = nullptr;
-	D3DCompileFromFile(L"hlsl/VertexShader.txt", nullptr, nullptr, "VS", "vs_5_0", 0, 0, &pVSBlob, nullptr);
-	Device->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &VertexShader);
-
-	ID3DBlob* pPSBlob = nullptr;
-	D3DCompileFromFile(L"hlsl/PixelShader.txt", nullptr, nullptr, "PS", "ps_5_0", 0, 0, &pPSBlob, nullptr);
-	Device->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &PixelShader);
-
-	Device->CreateInputLayout(ied, 2, pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &InputLayout);
-	pVSBlob->Release();
 }
 
 void DrawScene()
@@ -165,19 +150,24 @@ void DrawScene()
 		run = false;
 	}
 
+	VertexShader vshader(Device, L"hlsl/VertexShader.txt", "Main");
+	PixelShader pshader(Device, L"hlsl/PixelShader.txt", "Main");
+
 	float color[4] = {0.0f,0.0f,0.0f,1.0f};
 	Context->OMSetRenderTargets(1, &RenderTargetView, NULL);
 	Context->ClearRenderTargetView(RenderTargetView,color);
-	//Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0);
+	Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0);
 
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 	Context->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
-	Context->IASetInputLayout(InputLayout);
+
+	vshader.SetInputLayout(Device, Context, ied, 2);
+
 	Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	Context->VSSetShader(VertexShader, nullptr, 0);
-	Context->PSSetShader(PixelShader, nullptr, 0);
+	vshader.Set(Context);
+	pshader.Set(Context);
 
 	Context->Draw(3, 0);
 
@@ -192,12 +182,8 @@ void CleanGraphics()
 	SwapChain->Release();
 
 	RenderTargetView->Release();
-	//DepthStencilView->Release();
+    DepthStencilView->Release();
 
 	VertexBuffer->Release();
 
-	VertexShader->Release();
-	PixelShader->Release();
-
-	InputLayout->Release();
 }
