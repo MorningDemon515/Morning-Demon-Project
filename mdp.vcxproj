@@ -167,6 +167,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Main.h" />
+    <ClInclude Include="Rectangle.h" />
+    <ClInclude Include="RectangleTexture.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Triangle.h" />
   </ItemGroup>

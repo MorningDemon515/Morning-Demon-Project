@@ -10,6 +10,8 @@ IDXGISwapChain* SwapChain;
 ID3D11RenderTargetView* RenderTargetView;
 ID3D11DepthStencilView* DepthStencilView;
 
+ID3D11BlendState* BlendState;
+
 void InitScene();
 void Draw_Scene();
 void CleanScene();
@@ -107,7 +109,17 @@ void InitGraphics(int windowed)
 	Device->CreateDepthStencilView(DepthStencilBuffer, NULL, &DepthStencilView);
 	DepthStencilBuffer->Release();
 
-	Context->OMSetRenderTargets(1,&RenderTargetView, DepthStencilView);
+	D3D11_BLEND_DESC blendDesc = { 0 };
+	blendDesc.RenderTarget[0].BlendEnable = TRUE;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	Device->CreateBlendState(&blendDesc, &BlendState);
 
 	D3D11_VIEWPORT vp = { 0 };
 	vp.Width = (windowed == 1) ? WINDOW_WIDTH : (FLOAT)ScreenWidth;
@@ -127,8 +139,10 @@ void DrawScene()
 		run = false;
 	}
 
-	float color[4] = {0.0f,0.0f,0.0f,1.0f};
-	Context->OMSetRenderTargets(1, &RenderTargetView, NULL);
+	float color[4] = {1.0f,1.0f,1.0f,1.0f};
+	float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	Context->OMSetRenderTargets(1, &RenderTargetView, DepthStencilView);
+	Context->OMSetBlendState(BlendState, blendFactor, 0xFFFFFFFF);
 	Context->ClearRenderTargetView(RenderTargetView,color);
 	Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0);
 
@@ -146,6 +160,8 @@ void CleanGraphics()
 
 	RenderTargetView->Release();
     DepthStencilView->Release();
+
+	BlendState->Release();
 
 	CleanScene();
 }

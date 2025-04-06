@@ -1,3 +1,6 @@
+
+#include "Rectangle.h"
+#include "RectangleTexture.h"
 #include "Triangle.h"
 
 extern ID3D11Device* Device;
@@ -11,12 +14,19 @@ void InitScene()
 void Draw_Scene()
 {
 
+	/*
 	Triangle t1(Device, 
 		-0.4f, 0.0f, 0.0f,
 		0.5f,0.5f,0.5f,
 		1.0f,0.0f,0.0f);
 
-	t1.Draw(Device,Context);
+	t1.Draw(Device,Context);*/
+
+	RectangleTexture r1(Device,"image.png",
+		-0.4f, 0.0f, 0.0f,
+		0.5f, 0.5f, 0.5f);
+
+	r1.Draw(Device,Context);
 
 	Triangle t2(Device,
 		0.7f, 0.0f, 0.0f,

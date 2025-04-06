@@ -1,0 +1,11 @@
+Texture2D tex : register(t0);
+SamplerState samLinear : register(s0);
+
+struct PS_IN {
+    float4 Pos : SV_POSITION;
+    float2 Tex : TEXCOORD0;
+};
+
+float4 Main(PS_IN input) : SV_Target {
+    return tex.Sample(samLinear, input.Tex);
+}
