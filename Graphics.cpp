@@ -11,6 +11,9 @@ ID3D11RenderTargetView* RenderTargetView;
 ID3D11DepthStencilView* DepthStencilView;
 
 ID3D11BlendState* BlendState;
+ID3D11DepthStencilState* depthStencilState;
+
+ID3D11RasterizerState* rsState;
 
 void InitScene();
 void Draw_Scene();
@@ -121,6 +124,20 @@ void InitGraphics(int windowed)
 
 	Device->CreateBlendState(&blendDesc, &BlendState);
 
+	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	Device->CreateDepthStencilState(&dsDesc, &depthStencilState);
+
+	D3D11_RASTERIZER_DESC rsDesc = {};
+	rsDesc.FillMode = D3D11_FILL_SOLID;
+	rsDesc.CullMode = D3D11_CULL_NONE; 
+	rsDesc.FrontCounterClockwise = FALSE;
+
+	Device->CreateRasterizerState(&rsDesc, &rsState);
+
 	D3D11_VIEWPORT vp = { 0 };
 	vp.Width = (windowed == 1) ? WINDOW_WIDTH : (FLOAT)ScreenWidth;
 	vp.Height = (windowed == 1) ? WINDOW_HEIGHT : (FLOAT)ScreenHeight;
@@ -143,6 +160,8 @@ void DrawScene()
 	float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	Context->OMSetRenderTargets(1, &RenderTargetView, DepthStencilView);
 	Context->OMSetBlendState(BlendState, blendFactor, 0xFFFFFFFF);
+	Context->OMSetDepthStencilState(depthStencilState, 1);
+	Context->RSSetState(rsState);
 	Context->ClearRenderTargetView(RenderTargetView,color);
 	Context->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f,0);
 
@@ -162,6 +181,8 @@ void CleanGraphics()
     DepthStencilView->Release();
 
 	BlendState->Release();
+	depthStencilState->Release();
+	rsState->Release();
 
 	CleanScene();
 }
